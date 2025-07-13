@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html lang="ja">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>画像ダウンローダー</title>
+    <style>
+        body {
+            width: 300px;
+            min-height: 200px;
+            margin: 0;
+            padding: 16px;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+
+        .header h1 {
+            margin: 0;
+            font-size: 18px;
+            font-weight: 600;
+        }
+
+        .header p {
+            margin: 5px 0 0 0;
+            font-size: 12px;
+            opacity: 0.8;
+        }
+
+        .stats {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 8px;
+            padding: 12px;
+            margin-bottom: 16px;
+        }
+
+        .stat-item {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 8px;
+        }
+
+        .stat-item:last-child {
+            margin-bottom: 0;
+        }
+
+        .stat-label {
+            font-size: 12px;
+            opacity: 0.8;
+        }
+
+        .stat-value {
+            font-size: 12px;
+            font-weight: 600;
+        }
+
+        .actions {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .btn {
+            background: rgba(255, 255, 255, 0.2);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            color: white;
+            padding: 10px 16px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: all 0.2s;
+            text-align: center;
+            text-decoration: none;
+        }
+
+        .btn:hover {
+            background: rgba(255, 255, 255, 0.3);
+            transform: translateY(-1px);
+        }
+
+        .btn:active {
+            transform: translateY(0);
+        }
+
+        .btn-primary {
+            background: rgba(255, 255, 255, 0.9);
+            color: #667eea;
+            font-weight: 600;
+        }
+
+        .btn-primary:hover {
+            background: white;
+        }
+
+        .footer {
+            margin-top: 16px;
+            text-align: center;
+            font-size: 10px;
+            opacity: 0.6;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="header">
+        <h1>📥 画像ダウンローダー</h1>
+        <p>Webページから画像を簡単にダウンロード</p>
+    </div>
+
+    <div class="stats">
+        <div class="stat-item">
+            <span class="stat-label">検出された画像:</span>
+            <span class="stat-value" id="imageCount">0</span>
+        </div>
+        <div class="stat-item">
+            <span class="stat-label">ダウンロード済み:</span>
+            <span class="stat-value" id="downloadCount">0</span>
+        </div>
+    </div>
+
+    <div class="actions">
+        <button class="btn btn-primary" id="downloadAllBtn">
+            🖼️ すべての画像をダウンロード
+        </button>
+        <button class="btn" id="scanImagesBtn">
+            🔍 画像を再スキャン
+        </button>
+        <a href="options.html" class="btn" target="_blank">
+            ⚙️ 設定
+        </a>
+    </div>
+
+    <div class="footer">
+        Version 1.0.0
+    </div>
+</body>
+
+</html>

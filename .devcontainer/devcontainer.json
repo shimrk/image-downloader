@@ -1,0 +1,38 @@
+{
+    "name": "Chrome拡張機能開発環境",
+    "image": "mcr.microsoft.com/devcontainers/javascript-node:24",
+    "features": {
+        "ghcr.io/devcontainers/features/git:1": {},
+        "ghcr.io/devcontainers/features/github-cli:1": {}
+    },
+    "customizations": {
+        "vscode": {
+            "extensions": [
+                "ms-vscode.vscode-typescript-next",
+                "bradlc.vscode-tailwindcss",
+                "esbenp.prettier-vscode",
+                "ms-vscode.vscode-eslint",
+                "ms-vscode.vscode-json",
+                "ms-vscode.vscode-css-peek",
+                "ms-vscode.vscode-html-css-support",
+                "ms-vscode.vscode-chrome-debug",
+                "ms-vscode.vscode-js-debug",
+                "ms-vscode.vscode-js-debug-companion"
+            ],
+            "settings": {
+                "typescript.preferences.includePackageJsonAutoImports": "on",
+                "editor.formatOnSave": true,
+                "editor.defaultFormatter": "esbenp.prettier-vscode",
+                "files.associations": {
+                    "*.json": "jsonc"
+                }
+            }
+        }
+    },
+    "forwardPorts": [
+        3000,
+        8080
+    ],
+    "postCreateCommand": "npm install",
+    "remoteUser": "node"
+}

@@ -1,0 +1,222 @@
+<!DOCTYPE html>
+<html lang="ja">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>画像ダウンローダー - 設定</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 20px;
+            background: #f5f5f5;
+            color: #333;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+            padding: 20px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border-radius: 10px;
+        }
+
+        .header h1 {
+            margin: 0;
+            font-size: 24px;
+            font-weight: 600;
+        }
+
+        .header p {
+            margin: 10px 0 0 0;
+            opacity: 0.9;
+        }
+
+        .settings-section {
+            background: white;
+            border-radius: 10px;
+            padding: 20px;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+        }
+
+        .settings-section h2 {
+            margin: 0 0 20px 0;
+            color: #667eea;
+            font-size: 18px;
+            border-bottom: 2px solid #f0f0f0;
+            padding-bottom: 10px;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: #555;
+        }
+
+        .form-group input,
+        .form-group select {
+            width: 100%;
+            padding: 10px;
+            border: 2px solid #e0e0e0;
+            border-radius: 6px;
+            font-size: 14px;
+            transition: border-color 0.2s;
+        }
+
+        .form-group input:focus,
+        .form-group select:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .form-group .help-text {
+            font-size: 12px;
+            color: #666;
+            margin-top: 5px;
+        }
+
+        .checkbox-group {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .checkbox-group input[type="checkbox"] {
+            width: auto;
+        }
+
+        .actions {
+            display: flex;
+            gap: 10px;
+            justify-content: center;
+            margin-top: 30px;
+        }
+
+        .btn {
+            padding: 12px 24px;
+            border: none;
+            border-radius: 6px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .btn-primary {
+            background: #667eea;
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: #5a6fd8;
+            transform: translateY(-1px);
+        }
+
+        .btn-secondary {
+            background: #f0f0f0;
+            color: #333;
+        }
+
+        .btn-secondary:hover {
+            background: #e0e0e0;
+        }
+
+        .status {
+            text-align: center;
+            padding: 10px;
+            border-radius: 6px;
+            margin-top: 20px;
+            font-weight: 600;
+        }
+
+        .status.success {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+
+        .status.error {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+
+        .footer {
+            text-align: center;
+            margin-top: 30px;
+            padding: 20px;
+            color: #666;
+            font-size: 12px;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="header">
+        <h1>⚙️ 設定</h1>
+        <p>画像ダウンローダーの動作をカスタマイズ</p>
+    </div>
+
+    <div class="settings-section">
+        <h2>📁 ダウンロード設定</h2>
+
+        <div class="form-group">
+            <label for="downloadPath">保存先フォルダ:</label>
+            <input type="text" id="downloadPath" placeholder="例: images/">
+            <div class="help-text">ダウンロードした画像の保存先フォルダを指定します</div>
+        </div>
+
+        <div class="form-group">
+            <label for="fileNaming">ファイル名の形式:</label>
+            <select id="fileNaming">
+                <option value="original">元のファイル名を保持</option>
+                <option value="timestamp">タイムスタンプ付き</option>
+                <option value="sequential">連番付き</option>
+            </select>
+            <div class="help-text">ダウンロードする画像のファイル名の形式を選択します</div>
+        </div>
+    </div>
+
+    <div class="settings-section">
+        <h2>🎯 動作設定</h2>
+
+        <div class="form-group">
+            <div class="checkbox-group">
+                <input type="checkbox" id="autoDownload">
+                <label for="autoDownload">自動ダウンロードを有効にする</label>
+            </div>
+            <div class="help-text">画像にホバーした際に自動的にダウンロードを開始します</div>
+        </div>
+
+        <div class="form-group">
+            <div class="checkbox-group">
+                <input type="checkbox" id="showNotifications">
+                <label for="showNotifications">通知を表示する</label>
+            </div>
+            <div class="help-text">ダウンロードの開始・完了時に通知を表示します</div>
+        </div>
+    </div>
+
+    <div class="actions">
+        <button class="btn btn-primary" id="saveBtn">💾 設定を保存</button>
+        <button class="btn btn-secondary" id="resetBtn">🔄 リセット</button>
+    </div>
+
+    <div id="status" class="status" style="display: none;"></div>
+
+    <div class="footer">
+        <p>画像ダウンローダー v1.0.0</p>
+        <p>設定は自動的に保存され、すべてのタブで共有されます</p>
+    </div>
+</body>
+
+</html>
