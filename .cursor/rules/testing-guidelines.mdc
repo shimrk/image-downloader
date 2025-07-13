@@ -1,0 +1,173 @@
+# テスト実装ガイドライン
+
+## 単体テスト (Jest/Vitest)
+
+### テストファイル構造
+```typescript
+// テスト対象のファイルと同じディレクトリ構造を維持
+// src/background.ts → tests/unit/background/background.test.ts
+
+describe('Background Script', () => {
+  beforeEach(() => {
+    // Chrome APIのモック設定
+    global.chrome = mockChrome;
+  });
+
+  afterEach(() => {
+    jest.clearAllMocks();
+  });
+
+  describe('メッセージハンドラー', () => {
+    it('画像ダウンロードリクエストを正しく処理する', () => {
+      // Arrange
+      const message = { type: 'DOWNLOAD_IMAGE', url: 'test.jpg' };
+      
+      // Act
+      handleMessage(message);
+      
+      // Assert
+      expect(chrome.downloads.download).toHaveBeenCalledWith({
+        url: 'test.jpg',
+        filename: expect.any(String)
+      });
+    });
+  });
+});
+```
+
+### テスト命名規則
+- テストケース: `it('should [期待する動作] when [条件]', () => {})`
+- テストグループ: `describe('[テスト対象]', () => {})`
+- ネスト: `describe('[具体的な機能]', () => {})`
+
+### アサーション例
+```typescript
+// 関数呼び出しの検証
+expect(mockFunction).toHaveBeenCalledWith(expectedArgs);
+expect(mockFunction).toHaveBeenCalledTimes(1);
+
+// 戻り値の検証
+expect(result).toBe(expectedValue);
+expect(result).toEqual(expectedObject);
+
+// 例外の検証
+expect(() => functionThatThrows()).toThrow(Error);
+```
+
+## E2Eテスト (Playwright)
+
+### テストファイル構造
+```typescript
+import { test, expect } from '@playwright/test';
+
+test.describe('Chrome拡張機能 E2E', () => {
+  test.beforeEach(async ({ page }) => {
+    // 拡張機能の読み込み
+    await page.goto('chrome-extension://[extension-id]/popup.html');
+  });
+
+  test('ポップアップで画像ダウンロードが正常に動作する', async ({ page }) => {
+    // Arrange
+    await page.setContent('<img src="test.jpg" />');
+    
+    // Act
+    await page.click('[data-testid="download-button"]');
+    
+    // Assert
+    await expect(page.locator('.download-status')).toHaveText('ダウンロード完了');
+  });
+});
+```
+
+### テストデータ管理
+```typescript
+// tests/helpers/fixtures/test-images.ts
+export const testImages = {
+  valid: [
+    'https://example.com/image1.jpg',
+    'https://example.com/image2.png'
+  ],
+  invalid: [
+    'https://example.com/nonexistent.jpg',
+    'invalid-url'
+  ]
+};
+```
+
+## Chrome API モック
+
+### 基本モック設定
+```typescript
+// tests/helpers/mocks/chrome-api.ts
+export const mockChrome = {
+  storage: {
+    local: {
+      get: jest.fn().mockResolvedValue({}),
+      set: jest.fn().mockResolvedValue(undefined)
+    },
+    sync: {
+      get: jest.fn().mockResolvedValue({}),
+      set: jest.fn().mockResolvedValue(undefined)
+    }
+  },
+  tabs: {
+    query: jest.fn().mockResolvedValue([{ id: 1, url: 'https://example.com' }]),
+    sendMessage: jest.fn().mockResolvedValue({})
+  },
+  downloads: {
+    download: jest.fn().mockResolvedValue(1)
+  },
+  runtime: {
+    sendMessage: jest.fn().mockResolvedValue({}),
+    onMessage: {
+      addListener: jest.fn(),
+      removeListener: jest.fn()
+    }
+  }
+};
+```
+
+## テストヘルパー関数
+
+### ユーティリティ関数
+```typescript
+// tests/helpers/utils.ts
+export const createMockImage = (src: string, alt: string = '') => {
+  const img = document.createElement('img');
+  img.src = src;
+  img.alt = alt;
+  return img;
+};
+
+export const waitForDownload = (timeout = 5000) => {
+  return new Promise(resolve => setTimeout(resolve, timeout));
+};
+```
+
+## テスト実行時の注意点
+
+### 1. 環境分離
+- テスト環境と本番環境の設定を分離
+- テスト用の設定ファイルを使用
+
+### 2. 非同期処理
+- `async/await`を適切に使用
+- タイムアウト設定を考慮
+
+### 3. クリーンアップ
+- テスト後の状態をリセット
+- モックのクリア
+
+### 4. エラーハンドリング
+- エラーケースのテストも含める
+- 例外処理の検証
+
+## 参考ファイル
+
+- [src/background.ts](mdc:src/background.ts) - Background script
+- [src/content.ts](mdc:src/content.ts) - Content script
+- [src/popup.ts](mdc:src/popup.ts) - Popup script
+description:
+globs:
+alwaysApply: true
+---

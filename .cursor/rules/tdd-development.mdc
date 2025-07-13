@@ -1,0 +1,123 @@
+# TDD開発方針 (Red-Green-Refactor)
+
+## 基本原則
+
+### 1. 開発フロー
+- **Red**: 失敗するテストを先に書く
+- **Green**: テストが通る最小限の実装を行う
+- **Refactor**: コードを改善し、テストが通ることを確認
+
+### 2. テスト戦略
+- **単体テスト**: Jest/Vitestを使用してビジネスロジックをテスト
+- **E2Eテスト**: Playwrightを使用してChrome拡張機能の動作をテスト
+- **統合テスト**: 必要に応じてChrome APIとの統合をテスト
+
+## テスト環境設定
+
+### 単体テスト (Jest/Vitest)
+- テストファイル配置: `tests/unit/` ディレクトリ
+- ファイル命名: `*.test.ts` または `*.spec.ts`
+- Chrome APIのモック化必須
+
+### E2Eテスト (Playwright)
+- テストファイル配置: `tests/e2e/` ディレクトリ
+- ファイル命名: `*.e2e.ts`
+- Chrome拡張機能の実際の動作をテスト
+
+## Chrome拡張機能特有のテスト
+
+### Background Script
+- イベントハンドラーのテスト
+- Chrome API呼び出しのテスト
+- メッセージング機能のテスト
+
+### Content Script
+- DOM操作のテスト
+- ページ内での動作テスト
+- メッセージング機能のテスト
+
+### Popup/Options
+- UI操作のテスト
+- 設定の保存・読み込みテスト
+- ユーザーインタラクションのテスト
+
+## モック戦略
+
+### Chrome API モック
+```typescript
+// Chrome APIのモック例
+const mockChrome = {
+  storage: {
+    local: {
+      get: jest.fn(),
+      set: jest.fn()
+    }
+  },
+  tabs: {
+    query: jest.fn(),
+    sendMessage: jest.fn()
+  }
+};
+```
+
+## テストファイル構造
+
+```
+tests/
+├── unit/           # 単体テスト
+│   ├── background/
+│   ├── content/
+│   ├── popup/
+│   └── utils/
+├── e2e/            # E2Eテスト
+│   ├── popup/
+│   ├── content/
+│   └── options/
+└── helpers/        # テストヘルパー
+    ├── mocks/
+    └── fixtures/
+```
+
+## 開発時の注意点
+
+### 1. テストファースト
+- 新機能実装時は必ずテストから書く
+- バグ修正時も再現テストを先に書く
+
+### 2. テストカバレッジ
+- 単体テスト: 80%以上のカバレッジを目標
+- E2Eテスト: 主要なユーザーフローをカバー
+
+### 3. テストの独立性
+- 各テストは独立して実行可能であること
+- テスト間の依存関係を避ける
+
+### 4. テストデータ
+- テスト用の固定データを使用
+- 外部依存を最小限に抑える
+
+## 推奨コマンド
+
+```bash
+# 単体テスト実行
+npm run test:unit
+
+# E2Eテスト実行
+npm run test:e2e
+
+# 全テスト実行
+npm run test
+
+# テストカバレッジ確認
+npm run test:coverage
+```
+
+## 参考ファイル
+
+- [package.json](mdc:package.json) - プロジェクト設定
+- [tsconfig.json](mdc:tsconfig.json) - TypeScript設定
+- [manifest.json](mdc:manifest.json) - Chrome拡張機能設定
+description:
+globs:
+alwaysApply: true
+---
