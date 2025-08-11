@@ -10,6 +10,13 @@ const downloadPathInput = document.getElementById(
 const fileNamingSelect = document.getElementById(
   'fileNaming'
 ) as HTMLSelectElement;
+const templateGroup = document.getElementById('templateGroup') as HTMLElement;
+const fileNameTemplateInput = document.getElementById(
+  'fileNameTemplate'
+) as HTMLInputElement;
+const templatePreview = document.getElementById(
+  'templatePreview'
+) as HTMLElement;
 const autoDownloadCheckbox = document.getElementById(
   'autoDownload'
 ) as HTMLInputElement;
@@ -52,6 +59,8 @@ function setupEventListeners(): void {
 
   fileNamingSelect.addEventListener('change', () => {
     showStatus('設定が変更されました。保存してください。', 'info');
+    toggleTemplateVisibility();
+    updateTemplatePreview();
   });
 
   autoDownloadCheckbox.addEventListener('change', () => {
@@ -60,6 +69,11 @@ function setupEventListeners(): void {
 
   showNotificationsCheckbox.addEventListener('change', () => {
     showStatus('設定が変更されました。保存してください。', 'info');
+  });
+
+  fileNameTemplateInput.addEventListener('input', () => {
+    showStatus('設定が変更されました。保存してください。', 'info');
+    updateTemplatePreview();
   });
 }
 
@@ -71,6 +85,9 @@ async function loadSettings(): Promise<void> {
     // フォームに値を設定
     downloadPathInput.value = settings.downloadPath;
     fileNamingSelect.value = settings.fileNaming;
+    fileNameTemplateInput.value = settings.fileNameTemplate || '';
+    toggleTemplateVisibility();
+    updateTemplatePreview();
     autoDownloadCheckbox.checked = settings.autoDownload;
     showNotificationsCheckbox.checked = settings.showNotifications;
 
@@ -89,6 +106,7 @@ async function saveSettings(): Promise<void> {
       fileNaming: fileNamingSelect.value as Settings['fileNaming'],
       autoDownload: autoDownloadCheckbox.checked,
       showNotifications: showNotificationsCheckbox.checked,
+      fileNameTemplate: fileNameTemplateInput.value.trim() || undefined,
     };
 
     // バリデーション
@@ -176,7 +194,77 @@ function validateSettings(settings: Settings): boolean {
     settings.downloadPath += '/';
   }
 
+  // テンプレート選択時の検証
+  if (settings.fileNaming === 'template') {
+    const tpl = (fileNameTemplateInput.value || '').trim();
+    if (!tpl) {
+      showStatus('テンプレートが未入力です', 'error');
+      return false;
+    }
+    if (tpl.startsWith('/')) {
+      showStatus('テンプレートは先頭に/を含めないでください', 'error');
+      return false;
+    }
+    if (tpl.includes('..')) {
+      showStatus('テンプレートに .. は使用できません', 'error');
+      return false;
+    }
+  }
+
   return true;
+}
+
+function toggleTemplateVisibility(): void {
+  if (fileNamingSelect.value === 'template') {
+    templateGroup.style.display = 'block';
+  } else {
+    templateGroup.style.display = 'none';
+  }
+}
+
+function updateTemplatePreview(): void {
+  if (fileNamingSelect.value !== 'template') {
+    templatePreview.textContent = '';
+    return;
+  }
+  const tpl = fileNameTemplateInput.value || '';
+  const example = applyTemplateForPreview(tpl);
+  templatePreview.textContent = `プレビュー: ${example || '-'}`;
+}
+
+function applyTemplateForPreview(template: string): string {
+  if (!template) return '';
+  const now = new Date();
+  const pad = (n: number, w = 2) => n.toString().padStart(w, '0');
+  // ダミー値
+  const ctx = {
+    name: 'image',
+    ext: 'jpg',
+    domain: 'example.com',
+    host: 'example.com',
+    path: 'photos/summer',
+    title: 'Sample Page',
+    timestamp: Math.floor(now.getTime() / 1000).toString(),
+    yyyy: now.getFullYear().toString(),
+    mm: pad(now.getMonth() + 1),
+    dd: pad(now.getDate()),
+    date: `${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())}`,
+    seq: '001',
+  } as Record<string, string>;
+
+  // {date:YYYY-MM-DD} や {seq:3} を簡易対応
+  let out = template.replace(/\{date:([^}]+)\}/g, (_m, fmt) => {
+    const yyyy = ctx.yyyy;
+    const mm = ctx.mm;
+    const dd = ctx.dd;
+    return fmt.replace(/YYYY/g, yyyy).replace(/MM/g, mm).replace(/DD/g, dd);
+  });
+  out = out.replace(/\{seq:(\d+)\}/g, (_m, w) => '1'.padStart(Number(w), '0'));
+  out = out.replace(
+    /\{(name|ext|domain|host|path|title|timestamp|yyyy|mm|dd|date)\}/g,
+    (_m, k) => ctx[k] || ''
+  );
+  return out;
 }
 
 // ステータス表示

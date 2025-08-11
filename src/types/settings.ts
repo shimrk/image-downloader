@@ -1,9 +1,11 @@
 // 設定の型定義
 export interface Settings {
   downloadPath: string;
-  fileNaming: 'original' | 'timestamp' | 'sequential';
+  fileNaming: 'original' | 'timestamp' | 'sequential' | 'template';
   autoDownload: boolean;
   showNotifications: boolean;
+  // テンプレート指定（fileNaming が 'template' の場合に使用）
+  fileNameTemplate?: string;
 }
 
 // メッセージの型定義
