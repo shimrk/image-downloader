@@ -49,11 +49,14 @@ function getImageList(): ImageInfo[] {
     // ファイル名を抽出
     const filename = extractFilename(img.src);
 
+    const naturalW = (img as HTMLImageElement).naturalWidth || img.width;
+    const naturalH = (img as HTMLImageElement).naturalHeight || img.height;
+
     imageList.push({
       src: img.src,
       alt: img.alt || '',
-      width: img.width,
-      height: img.height,
+      width: naturalW,
+      height: naturalH,
       filename: filename,
     });
   });

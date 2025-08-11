@@ -1,5 +1,11 @@
 // ポップアップ画面のスクリプト
 import { ImageInfo } from './types/image';
+import {
+  getFilteredSortedImages,
+  getExtension,
+  ImageFilters,
+  ImageSortOption,
+} from './utils/imageFilter';
 
 console.log('ポップアップ画面が読み込まれました');
 
@@ -24,10 +30,38 @@ const imageListElement = document.getElementById('imageList') as HTMLElement;
 const subdirectoryInput = document.getElementById(
   'subdirectoryInput'
 ) as HTMLInputElement;
+// フィルタ/ソート UI
+const minWidthInput = document.getElementById(
+  'minWidthInput'
+) as HTMLInputElement | null;
+const minHeightInput = document.getElementById(
+  'minHeightInput'
+) as HTMLInputElement | null;
+const sortKeySelect = document.getElementById(
+  'sortKeySelect'
+) as HTMLSelectElement | null;
+const sortOrderSelect = document.getElementById(
+  'sortOrderSelect'
+) as HTMLSelectElement | null;
+const clearFiltersBtn = document.getElementById(
+  'clearFiltersBtn'
+) as HTMLButtonElement | null;
 
 // 状態管理
 let images: ImageInfo[] = [];
 let selectedImages: Set<string> = new Set();
+
+// フィルタ/ソート状態
+let filters: ImageFilters = {
+  minWidth: 0,
+  minHeight: 0,
+  extensions: new Set<string>(['jpg', 'jpeg', 'png', 'gif', 'webp', 'svg', '']),
+};
+
+let sortOption: ImageSortOption = {
+  key: 'area',
+  order: 'desc',
+};
 
 // 初期化
 document.addEventListener('DOMContentLoaded', async () => {
@@ -123,6 +157,67 @@ function setupEventListeners(): void {
     updateSelectedCount();
     updateImageList();
   });
+
+  // フィルタ/ソートイベント
+  const onFilterChange = debounce(() => {
+    // 数値入力
+    if (minWidthInput)
+      filters.minWidth = clampNonNegativeInt(minWidthInput.value);
+    if (minHeightInput)
+      filters.minHeight = clampNonNegativeInt(minHeightInput.value);
+
+    // 拡張子
+    const checkboxes = Array.from(
+      document.querySelectorAll<HTMLInputElement>('input.ext-checkbox')
+    );
+    const next = new Set<string>();
+    checkboxes.forEach(cb => {
+      if (cb.checked) next.add(cb.value.toLowerCase());
+    });
+    filters.extensions = next;
+
+    // ソート
+    if (sortKeySelect)
+      sortOption.key = sortKeySelect.value as ImageSortOption['key'];
+    if (sortOrderSelect)
+      sortOption.order = sortOrderSelect.value as ImageSortOption['order'];
+
+    updateImageList();
+  }, 120);
+
+  minWidthInput?.addEventListener('input', onFilterChange);
+  minHeightInput?.addEventListener('input', onFilterChange);
+  sortKeySelect?.addEventListener('change', onFilterChange);
+  sortOrderSelect?.addEventListener('change', onFilterChange);
+  document
+    .querySelectorAll<HTMLInputElement>('input.ext-checkbox')
+    .forEach(cb => cb.addEventListener('change', onFilterChange));
+
+  clearFiltersBtn?.addEventListener('click', () => {
+    if (minWidthInput) minWidthInput.value = '';
+    if (minHeightInput) minHeightInput.value = '';
+    if (sortKeySelect) sortKeySelect.value = 'area';
+    if (sortOrderSelect) sortOrderSelect.value = 'desc';
+    document
+      .querySelectorAll<HTMLInputElement>('input.ext-checkbox')
+      .forEach(cb => (cb.checked = true));
+
+    filters = {
+      minWidth: 0,
+      minHeight: 0,
+      extensions: new Set<string>([
+        'jpg',
+        'jpeg',
+        'png',
+        'gif',
+        'webp',
+        'svg',
+        '',
+      ]),
+    };
+    sortOption = { key: 'area', order: 'desc' };
+    updateImageList();
+  });
 }
 
 // 画像一覧を読み込み
@@ -161,7 +256,9 @@ function updateImageList(): void {
 
   imageListElement.innerHTML = '';
 
-  images.forEach(image => {
+  const displayList = getFilteredSortedImages(images, filters, sortOption);
+
+  displayList.forEach(image => {
     const imageItem = createImageItem(image);
     imageListElement.appendChild(imageItem);
   });
@@ -204,7 +301,8 @@ function createImageItem(image: ImageInfo): HTMLElement {
 
   const details = document.createElement('div');
   details.className = 'image-details';
-  details.textContent = `${image.width} × ${image.height} | ${image.alt || 'No alt text'}`;
+  const ext = getExtension(image) || 'other';
+  details.textContent = `${image.width} × ${image.height} | .${ext} | ${image.alt || 'No alt text'}`;
 
   info.appendChild(filename);
   info.appendChild(details);
@@ -242,6 +340,21 @@ function updateDownloadButton(): void {
 // 選択された画像を取得
 function getSelectedImages(): ImageInfo[] {
   return images.filter(img => selectedImages.has(img.src));
+}
+
+// ユーティリティ
+function debounce<T extends (...args: any[]) => void>(fn: T, ms: number): T {
+  let timer: number | undefined;
+  return ((...args: any[]) => {
+    if (timer) window.clearTimeout(timer);
+    timer = window.setTimeout(() => fn(...args), ms);
+  }) as T;
+}
+
+function clampNonNegativeInt(value: string): number {
+  const n = parseInt(value, 10);
+  if (Number.isNaN(n) || n < 0) return 0;
+  return n;
 }
 
 // メッセージ表示

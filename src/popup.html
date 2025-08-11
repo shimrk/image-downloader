@@ -252,6 +252,89 @@
       />
     </div>
 
+    <div class="subdirectory-section" id="filterSection">
+      <div
+        style="
+          display: grid;
+          grid-template-columns: 1fr 1fr;
+          gap: 8px;
+          margin-bottom: 8px;
+        "
+      >
+        <input
+          type="number"
+          id="minWidthInput"
+          class="subdirectory-input"
+          placeholder="最小幅(px)"
+          min="0"
+        />
+        <input
+          type="number"
+          id="minHeightInput"
+          class="subdirectory-input"
+          placeholder="最小高(px)"
+          min="0"
+        />
+      </div>
+      <div
+        style="
+          display: flex;
+          flex-wrap: wrap;
+          gap: 8px;
+          margin-bottom: 8px;
+          font-size: 12px;
+        "
+      >
+        <label
+          ><input type="checkbox" class="ext-checkbox" value="jpg" checked />
+          JPG</label
+        >
+        <label
+          ><input type="checkbox" class="ext-checkbox" value="jpeg" checked />
+          JPEG</label
+        >
+        <label
+          ><input type="checkbox" class="ext-checkbox" value="png" checked />
+          PNG</label
+        >
+        <label
+          ><input type="checkbox" class="ext-checkbox" value="gif" checked />
+          GIF</label
+        >
+        <label
+          ><input type="checkbox" class="ext-checkbox" value="webp" checked />
+          WEBP</label
+        >
+        <label
+          ><input type="checkbox" class="ext-checkbox" value="svg" checked />
+          SVG</label
+        >
+        <label
+          ><input type="checkbox" class="ext-checkbox" value="" checked />
+          その他</label
+        >
+      </div>
+      <div style="display: flex; gap: 8px; align-items: center">
+        <select id="sortKeySelect" class="subdirectory-input" style="flex: 1">
+          <option value="area">解像度(面積)</option>
+          <option value="width">幅</option>
+          <option value="height">高さ</option>
+          <option value="filename">ファイル名</option>
+        </select>
+        <select
+          id="sortOrderSelect"
+          class="subdirectory-input"
+          style="width: 120px"
+        >
+          <option value="desc">降順</option>
+          <option value="asc">昇順</option>
+        </select>
+        <button id="clearFiltersBtn" class="btn" style="width: 140px">
+          🧹 フィルタをクリア
+        </button>
+      </div>
+    </div>
+
     <div id="imageList" class="image-list">
       <div class="loading">
         <div class="spinner"></div>
