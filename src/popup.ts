@@ -72,6 +72,24 @@ document.addEventListener('DOMContentLoaded', async () => {
 
   // 画像一覧を読み込み
   await loadImageList();
+
+  // バッジ初期更新（念のため）
+  try {
+    const [tab] = await chrome.tabs.query({
+      active: true,
+      currentWindow: true,
+    });
+    if (tab?.id) {
+      chrome.tabs.sendMessage(tab.id, { type: 'GET_IMAGE_LIST' }, response => {
+        if (response?.images) {
+          chrome.runtime.sendMessage({
+            type: 'UPDATE_BADGE',
+            count: response.images.length,
+          });
+        }
+      });
+    }
+  } catch {}
 });
 
 // イベントリスナーの設定
@@ -238,6 +256,10 @@ async function loadImageList(): Promise<void> {
           updateImageCount();
           updateSelectedCount();
           updateImageList();
+          chrome.runtime.sendMessage({
+            type: 'UPDATE_BADGE',
+            count: images.length,
+          });
         }
       });
     }
@@ -282,6 +304,8 @@ function createImageItem(image: ImageInfo): HTMLElement {
     }
     updateSelectedCount();
     updateDownloadButton();
+    // 見た目のハイライト
+    item.classList.toggle('selected', target.checked);
   });
 
   const thumbnail = document.createElement('img');
@@ -310,6 +334,24 @@ function createImageItem(image: ImageInfo): HTMLElement {
   item.appendChild(checkbox);
   item.appendChild(thumbnail);
   item.appendChild(info);
+
+  // カード全体クリックでトグル
+  item.addEventListener('click', e => {
+    // チェックボックス自体のクリックは二重反応させない
+    if ((e.target as HTMLElement).classList.contains('image-checkbox')) {
+      return;
+    }
+    const nowChecked = !checkbox.checked;
+    checkbox.checked = nowChecked;
+    if (nowChecked) {
+      selectedImages.add(image.src);
+    } else {
+      selectedImages.delete(image.src);
+    }
+    item.classList.toggle('selected', nowChecked);
+    updateSelectedCount();
+    updateDownloadButton();
+  });
 
   return item;
 }

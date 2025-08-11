@@ -17,6 +17,13 @@ chrome.runtime.onInstalled.addListener(
     };
 
     chrome.storage.sync.set(defaultSettings);
+
+    // バッジ背景色を初期設定
+    try {
+      chrome.action.setBadgeBackgroundColor({ color: '#6b7280' });
+    } catch (e) {
+      // 環境差による未対応は無視
+    }
   }
 );
 
@@ -30,7 +37,18 @@ chrome.runtime.onMessage.addListener(
     console.log('メッセージを受信:', request);
 
     if (request.type === 'DOWNLOAD_IMAGE') {
-      downloadImage(request.imageUrl, request.filename, sender.tab);
+      downloadImage(request.imageUrl, request.filename, sender.tab)
+        .then(downloadId => {
+          sendResponse({ ok: true, downloadId });
+        })
+        .catch(error => {
+          const message =
+            error && (error as any).message
+              ? (error as any).message
+              : 'unknown_error';
+          sendResponse({ ok: false, error: message });
+        });
+      return true; // 非同期レスポンス
     } else if (request.type === 'GET_SETTINGS') {
       getSettings().then(sendResponse);
       return true; // 非同期レスポンス
@@ -38,6 +56,17 @@ chrome.runtime.onMessage.addListener(
       if (request.settings) {
         saveSettings(request.settings).then(sendResponse);
         return true; // 非同期レスポンス
+      }
+    } else if ((request as any).type === 'UPDATE_BADGE') {
+      const count: number = (request as any).count ?? 0;
+      const tabId = sender.tab?.id;
+      if (typeof tabId === 'number') {
+        const text = count > 999 ? '999+' : count > 0 ? String(count) : '';
+        try {
+          chrome.action.setBadgeText({ text, tabId });
+        } catch (e) {
+          // 無視
+        }
       }
     } else {
       console.warn('未知のメッセージタイプ:', request);
@@ -50,33 +79,39 @@ async function downloadImage(
   imageUrl: string,
   filename?: string,
   tab?: chrome.tabs.Tab
-): Promise<void> {
-  try {
-    const settings = await getSettings();
-    const finalFilename = await resolveFilename({
-      imageUrl,
-      providedFilename: filename,
-      settings,
-      tab,
-    });
+): Promise<number> {
+  const settings = await getSettings();
+  const finalFilename = await resolveFilename({
+    imageUrl,
+    providedFilename: filename,
+    settings,
+    tab,
+  });
 
-    chrome.downloads.download(
-      {
-        url: imageUrl,
-        filename: `${settings.downloadPath}${finalFilename}`,
-        saveAs: false,
-      },
-      (downloadId: number) => {
-        if (chrome.runtime.lastError) {
-          console.error('ダウンロードエラー:', chrome.runtime.lastError);
-        } else {
-          console.log('ダウンロード開始:', downloadId);
+  return new Promise<number>((resolve, reject) => {
+    try {
+      chrome.downloads.download(
+        {
+          url: imageUrl,
+          filename: `${settings.downloadPath}${finalFilename}`,
+          saveAs: false,
+        },
+        (downloadId?: number) => {
+          if (chrome.runtime.lastError) {
+            console.error('ダウンロードエラー:', chrome.runtime.lastError);
+            reject(new Error(chrome.runtime.lastError.message));
+          } else if (typeof downloadId === 'number') {
+            console.log('ダウンロード開始:', downloadId);
+            resolve(downloadId);
+          } else {
+            reject(new Error('failed_to_start_download'));
+          }
         }
-      }
-    );
-  } catch (error) {
-    console.error('画像ダウンロードエラー:', error);
-  }
+      );
+    } catch (e) {
+      reject(e as Error);
+    }
+  });
 }
 
 // 設定取得

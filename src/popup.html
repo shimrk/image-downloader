@@ -11,7 +11,7 @@
         margin: 0;
         padding: 16px;
         font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        background: #667eea; /* 単色に統一 */
         color: white;
         overflow-y: auto;
       }
@@ -96,6 +96,15 @@
         padding: 8px;
         margin-bottom: 8px;
         gap: 8px;
+        cursor: pointer; /* カード全体をクリック可能に */
+        transition:
+          box-shadow 0.15s ease,
+          background 0.15s ease;
+      }
+
+      .image-item.selected {
+        background: rgba(255, 255, 255, 0.22);
+        box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.35) inset;
       }
 
       .image-checkbox {
@@ -221,6 +230,38 @@
         }
         100% {
           transform: rotate(360deg);
+        }
+      }
+    </style>
+    <style>
+      @media (prefers-color-scheme: dark) {
+        body {
+          background: #111827; /* 単色に統一 */
+          color: #e5e7eb;
+        }
+        .stats,
+        .subdirectory-section,
+        .image-item {
+          background: rgba(255, 255, 255, 0.08);
+        }
+        .image-item.selected {
+          background: rgba(255, 255, 255, 0.16);
+          box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.25) inset;
+        }
+        .btn {
+          background: rgba(255, 255, 255, 0.12);
+          border: 1px solid rgba(255, 255, 255, 0.16);
+          color: #e5e7eb;
+        }
+        .btn:hover {
+          background: rgba(255, 255, 255, 0.18);
+        }
+        .btn-primary {
+          background: rgba(255, 255, 255, 0.9);
+          color: #111827;
+        }
+        .btn-primary:hover {
+          background: #ffffff;
         }
       }
     </style>

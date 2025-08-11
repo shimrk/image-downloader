@@ -31,6 +31,9 @@ function processImages(): void {
       hideDownloadButton(img);
     });
   });
+
+  // バッジ更新
+  tryUpdateBadge();
 }
 
 // 画像一覧を取得する関数
@@ -41,23 +44,19 @@ function getImageList(): ImageInfo[] {
   const imageList: ImageInfo[] = [];
 
   images.forEach(img => {
-    // 無効な画像を除外
-    if (!img.src || img.src === '' || img.width === 0 || img.height === 0) {
-      return;
-    }
+    const bestUrl = getBestImageUrl(img);
+    const width = img.naturalWidth || img.width;
+    const height = img.naturalHeight || img.height;
+    if (!bestUrl || width === 0 || height === 0) return;
 
-    // ファイル名を抽出
-    const filename = extractFilename(img.src);
-
-    const naturalW = (img as HTMLImageElement).naturalWidth || img.width;
-    const naturalH = (img as HTMLImageElement).naturalHeight || img.height;
+    const filename = extractFilename(bestUrl);
 
     imageList.push({
-      src: img.src,
+      src: bestUrl,
       alt: img.alt || '',
-      width: naturalW,
-      height: naturalH,
-      filename: filename,
+      width,
+      height,
+      filename,
     });
   });
 
@@ -128,7 +127,8 @@ function showDownloadButton(img: ImageElement): void {
   button.addEventListener('click', e => {
     e.preventDefault();
     e.stopPropagation();
-    downloadImage(img.src, img.alt || 'image');
+    const bestUrl = getBestImageUrl(img) || img.src;
+    downloadImage(bestUrl, extractFilename(bestUrl));
   });
 
   // 画像の親要素にボタンを追加
@@ -165,16 +165,29 @@ function downloadImage(
       imageUrl: imageUrl,
       filename: finalFilename,
     },
-    response => {
-      if (chrome.runtime.lastError) {
-        console.error('ダウンロードエラー:', chrome.runtime.lastError);
-        showNotification('ダウンロードに失敗しました', 'error');
+    (response: any) => {
+      if (chrome.runtime.lastError || !response?.ok) {
+        const err =
+          chrome.runtime.lastError?.message ||
+          response?.error ||
+          'unknown_error';
+        console.error('ダウンロードエラー:', err);
+        showNotification(
+          `ダウンロードに失敗しました: ${friendlyError(err)}`,
+          'error'
+        );
       } else {
-        console.log('ダウンロード成功:', response);
+        console.log('ダウンロード開始:', response.downloadId);
         showNotification('ダウンロードを開始しました', 'success');
       }
     }
   );
+}
+
+function friendlyError(code: string): string {
+  if (/NETWORK|Network|ERR|net::/i.test(code)) return 'ネットワークエラー';
+  if (/permissions|denied|forbid/i.test(code)) return '権限エラー';
+  return '不明なエラー';
 }
 
 // 通知表示
@@ -213,6 +226,12 @@ function showNotification(message: string, type: 'success' | 'error'): void {
     notification.remove();
     style.remove();
   }, 3000);
+
+  // クリックで即閉じ
+  notification.addEventListener('click', () => {
+    notification.remove();
+    style.remove();
+  });
 }
 
 // ページ読み込み完了時に画像を処理
@@ -223,22 +242,28 @@ if (document.readyState === 'loading') {
 }
 
 // 動的に追加される画像にも対応
+let debounceTimer: number | null = null;
 const observer = new MutationObserver(mutations => {
-  mutations.forEach(mutation => {
-    mutation.addedNodes.forEach(node => {
+  let found = false;
+  for (const mutation of mutations) {
+    for (const node of Array.from(mutation.addedNodes)) {
       if (node.nodeType === Node.ELEMENT_NODE) {
         const element = node as Element;
-        if (element.tagName === 'IMG') {
-          processImages();
-        } else {
-          const images = element.querySelectorAll('img');
-          if (images.length > 0) {
-            processImages();
-          }
+        if (element.tagName === 'IMG' || element.querySelector('img')) {
+          found = true;
+          break;
         }
       }
-    });
-  });
+    }
+    if (found) break;
+  }
+  if (found) {
+    if (debounceTimer) window.clearTimeout(debounceTimer);
+    debounceTimer = window.setTimeout(() => {
+      processImages();
+      tryUpdateBadge();
+    }, 150);
+  }
 });
 
 observer.observe(document.body, {
@@ -254,3 +279,41 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   }
   return true;
 });
+
+// 最高解像度のURLを決定
+function getBestImageUrl(img: HTMLImageElement): string | null {
+  if (img.currentSrc) return img.currentSrc;
+  const srcset = img.getAttribute('srcset');
+  if (!srcset) return img.src || null;
+  const candidates = parseSrcset(srcset);
+  if (candidates.length === 0) return img.src || null;
+  candidates.sort((a, b) => b.resolution - a.resolution);
+  return candidates[0].url;
+}
+
+function parseSrcset(srcset: string): { url: string; resolution: number }[] {
+  return srcset
+    .split(',')
+    .map(s => s.trim())
+    .map(item => {
+      const parts = item.split(/\s+/);
+      const url = parts[0];
+      const desc = parts[1] || '';
+      let res = 1;
+      if (desc.endsWith('x')) {
+        res = parseFloat(desc.replace('x', '')) || 1;
+      } else if (desc.endsWith('w')) {
+        const w = parseFloat(desc.replace('w', '')) || 0;
+        res = w;
+      }
+      return { url, resolution: res };
+    })
+    .filter(c => !!c.url);
+}
+
+function tryUpdateBadge(): void {
+  try {
+    const count = document.querySelectorAll('img').length;
+    chrome.runtime.sendMessage({ type: 'UPDATE_BADGE', count });
+  } catch (e) {}
+}
