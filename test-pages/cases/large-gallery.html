@@ -1,5 +1,74 @@
 <!doctype html>
-<html lang=ja>
+<html lang="ja">
 <head>
-  <meta charset=utf-8 />
-  <meta name=viewport content=width=device-width,
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Large Gallery - Test Page</title>
+  <style>
+    body { font-family: system-ui, sans-serif; margin: 0; padding: 16px; }
+    header { margin-bottom: 12px; }
+    main[role="main"] { max-width: 1200px; margin: 0 auto; }
+    #gallery { display: grid; grid-template-columns: repeat(auto-fill, minmax(80px, 1fr)); gap: 8px; }
+    .bg { width: 100%; padding-top: 100%; background-size: cover; background-position: center; }
+    figure { margin: 0; }
+  </style>
+</head>
+<body>
+  <header><h1>Large Gallery</h1></header>
+  <main role="main" data-section="content">
+    <p>大量画像のテストページです。サムネイル、原寸リンク、背景画像、data URL などを混在させています。</p>
+    <div id="gallery" data-testid="large-gallery"></div>
+  </main>
+  <script>
+    const container = document.getElementById('gallery');
+    const total = 600; // 大量画像
+    for (let i = 0; i < total; i++) {
+      const mod = i % 6;
+      if (mod === 0) {
+        const img = document.createElement('img');
+        img.src = '/assets/images/sample-256.svg';
+        img.alt = 'sample-256 ' + i;
+        img.loading = 'lazy';
+        container.appendChild(img);
+      } else if (mod === 1) {
+        const img = document.createElement('img');
+        img.src = '/assets/images/sample-1024.svg';
+        img.alt = 'sample-1024 ' + i;
+        img.decoding = 'async';
+        container.appendChild(img);
+      } else if (mod === 2) {
+        const picture = document.createElement('picture');
+        const src = document.createElement('source');
+        src.type = 'image/webp';
+        src.srcset = '/assets/images/sample-256.svg?as=webp'; // srcset の存在をテスト
+        picture.appendChild(src);
+        const img = document.createElement('img');
+        img.src = '/assets/images/sample-256.svg';
+        img.alt = 'picture ' + i;
+        picture.appendChild(img);
+        container.appendChild(picture);
+      } else if (mod === 3) {
+        const div = document.createElement('div');
+        div.className = 'bg';
+        div.setAttribute('data-kind', 'background-image');
+        div.style.backgroundImage = 'url(/assets/images/sample-256.svg)';
+        container.appendChild(div);
+      } else if (mod === 4) {
+        const img = document.createElement('img');
+        img.src = 'data:image/svg+xml;utf8,' + encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" width="64" height="64"><rect width="100%" height="100%" fill="#2196F3"/></svg>');
+        img.alt = 'data-url ' + i;
+        container.appendChild(img);
+      } else {
+        const a = document.createElement('a');
+        a.href = '/assets/images/sample-1024.svg';
+        a.target = '_blank';
+        const img = document.createElement('img');
+        img.src = '/assets/images/sample-256.svg';
+        img.alt = 'thumb ' + i;
+        a.appendChild(img);
+        container.appendChild(a);
+      }
+    }
+  </script>
+</body>
+</html>
